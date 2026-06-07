@@ -1,12 +1,11 @@
 <?php
 /**
  * Frontend Entry Point for Personal Budget Calculator
- * Serves the React frontend and handles routing
+ * Serves the React frontend and handles API routing
  */
 
 // Handle API requests
 if (strpos($_SERVER['REQUEST_URI'], '/api/') === 0) {
-    // Route to API endpoints
     $apiPath = substr($_SERVER['REQUEST_URI'], 5); // Remove '/api/'
     $apiFile = __DIR__ . '/src/api/' . $apiPath;
     
@@ -20,9 +19,52 @@ if (strpos($_SERVER['REQUEST_URI'], '/api/') === 0) {
     }
 }
 
+// Handle static assets
+if (strpos($_SERVER['REQUEST_URI'], '/assets/') === 0) {
+    $assetPath = __DIR__ . $_SERVER['REQUEST_URI'];
+    
+    if (file_exists($assetPath)) {
+        $mimeTypes = [
+            '.css' => 'text/css',
+            '.js' => 'application/javascript',
+            '.json' => 'application/json',
+            '.png' => 'image/png',
+            '.jpg' => 'image/jpeg',
+            '.jpeg' => 'image/jpeg',
+            '.gif' => 'image/gif',
+            '.svg' => 'image/svg+xml',
+            '.woff' => 'font/woff',
+            '.woff2' => 'font/woff2',
+        ];
+        
+        $extension = strtolower(pathinfo($assetPath, PATHINFO_EXTENSION));
+        $contentType = $mimeTypes['.' . $extension] ?? 'application/octet-stream';
+        
+        header('Content-Type: ' . $contentType);
+        readfile($assetPath);
+        exit;
+    } else {
+        http_response_code(404);
+        exit;
+    }
+}
+
+// Handle manifest and service worker
+if ($_SERVER['REQUEST_URI'] === '/manifest.json') {
+    header('Content-Type: application/json');
+    readfile(__DIR__ . '/manifest.json');
+    exit;
+}
+
+if ($_SERVER['REQUEST_URI'] === '/sw.js') {
+    header('Content-Type: application/javascript');
+    readfile(__DIR__ . '/sw.js');
+    exit;
+}
+
 // Handle login page
 if ($_SERVER['REQUEST_URI'] === '/login' || $_SERVER['REQUEST_URI'] === '/login/') {
-    serveFrontend('login');
+    serveFrontend();
     exit;
 }
 
@@ -33,16 +75,12 @@ if ($_SERVER['REQUEST_URI'] === '/logout' || $_SERVER['REQUEST_URI'] === '/logou
 }
 
 // For all other routes, serve the main app
-serveFrontend('app');
+serveFrontend();
 
 /**
  * Serve the frontend HTML file
- * @param string $page
  */
-function serveFrontend($page) {
-    // In a real implementation, this would serve the compiled React app
-    // For now, we'll serve a simple HTML page that loads the React app
-    
+function serveFrontend() {
     $html = <<<HTML
 <!DOCTYPE html>
 <html lang="en">
@@ -68,14 +106,29 @@ function serveFrontend($page) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Vite JS for development -->
+    <script type="module">
+      import { createRoot } from 'https://esm.sh/react-dom@18/client';
+      import { StrictMode } from 'https://esm.sh/react@18';
+      import { BrowserRouter, Routes, Route, Navigate } from 'https://esm.sh/react-router-dom@6';
+      
+      // Import App component
+      import { App } from './src/App';
+      
+      // Mount the app
+      const root = createRoot(document.getElementById('root'));
+      root.render(
+        <StrictMode>
+          <App />
+        </StrictMode>
+      );
+    </script>
 </head>
 <body>
     <div id="root"></div>
     
-    <!-- Load React app -->
-    <script type="module" src="/assets/js/main.js"></script>
-    
-    <!-- PWA Service Worker Registration -->
+    <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
