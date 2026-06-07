@@ -2,6 +2,9 @@
 /**
  * BudgetManager - Core business logic for Personal Budget Calculator
  * Handles budget items, calculations, history, and undo functionality
+ * 
+ * NOTE: Cleanup logic (history retention, undo stack limits) is handled here
+ * instead of database triggers (for hosting providers that restrict TRIGGER privileges)
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -97,6 +100,9 @@ class BudgetManager {
             'sort_order' => $sortOrder
         ]);
 
+        // Cleanup undo stack (keep only last 10 entries)
+        $this->cleanupUndoStack($userId);
+
         return $itemId;
     }
 
@@ -156,6 +162,12 @@ class BudgetManager {
 
             // Log to undo stack
             $this->logUndoAction($userId, 'update', 'budget_items', $id, ['amount' => $item['amount']], ['amount' => $data['amount']]);
+
+            // Cleanup undo stack (keep only last 10 entries)
+            $this->cleanupUndoStack($userId);
+
+            // Cleanup old history (3 months retention)
+            $this->cleanupHistory($userId);
         }
 
         return $result;
@@ -182,7 +194,12 @@ class BudgetManager {
         $this->logUndoAction($userId, 'delete', 'budget_items', $id, $item, null);
 
         $stmt = $this->pdo->prepare("DELETE FROM budget_items WHERE id = ? AND user_id = ?");
-        return $stmt->execute([$id, $userId]);
+        $result = $stmt->execute([$id, $userId]);
+
+        // Cleanup undo stack (keep only last 10 entries)
+        $this->cleanupUndoStack($userId);
+
+        return $result;
     }
 
     /**
@@ -204,6 +221,39 @@ class BudgetManager {
         if ($amount < 0 || $amount > 1000000) {
             throw new InvalidArgumentException("Amount must be between 0 and 1,000,000");
         }
+    }
+
+    // ==================== CLEANUP METHODS (for hosting without TRIGGER privileges) ====================
+
+    /**
+     * Cleanup old history (3 months retention)
+     * Called after history insertions
+     * @param int $userId
+     */
+    private function cleanupHistory($userId) {
+        $stmt = $this->pdo->prepare("DELETE FROM budget_history WHERE user_id = ? AND changed_at < DATE_SUB(NOW(), INTERVAL 3 MONTH)");
+        $stmt->execute([$userId]);
+    }
+
+    /**
+     * Cleanup undo stack (keep only last 10 entries per user)
+     * Called after undo stack insertions
+     * @param int $userId
+     */
+    private function cleanupUndoStack($userId) {
+        $stmt = $this->pdo->prepare("
+            DELETE FROM undo_stack 
+            WHERE user_id = ? 
+            AND id NOT IN (
+                SELECT id FROM (
+                    SELECT id FROM undo_stack 
+                    WHERE user_id = ? 
+                    ORDER BY created_at DESC 
+                    LIMIT 10
+                ) AS latest_10
+            )
+        ");
+        $stmt->execute([$userId, $userId]);
     }
 
     // ==================== CALCULATIONS ====================
@@ -348,6 +398,9 @@ class BudgetManager {
         if ($oldAmount != $newAmount) {
             $stmt = $this->pdo->prepare("INSERT INTO budget_history (user_id, item_id, old_amount, new_amount) VALUES (?, ?, ?, ?)");
             $stmt->execute([$userId, $itemId, $oldAmount, $newAmount]);
+            
+            // Cleanup old history (3 months retention)
+            $this->cleanupHistory($userId);
         }
     }
 
@@ -392,6 +445,9 @@ class BudgetManager {
             $oldData ? json_encode($oldData) : null,
             $newData ? json_encode($newData) : null
         ]);
+        
+        // Cleanup undo stack (keep only last 10 entries)
+        $this->cleanupUndoStack($userId);
     }
 
     /**

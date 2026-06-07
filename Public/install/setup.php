@@ -2,15 +2,19 @@
 /**
  * Database Setup Script for Personal Budget Calculator
  * Creates all required tables for the PHP + MariaDB stack
+ * 
+ * NOTE: This version does NOT create triggers (for hosting providers that restrict TRIGGER privileges)
+ * Cleanup logic is handled in the application code instead.
  */
 
 header('Content-Type: text/plain');
 
 // Database configuration (temporary for setup)
-$host = 'localhost';
-$dbname = 'budget_app';
-$user = 'root';
-$password = '';
+// Update these with your Infomaniak credentials
+$host = 'h2web430.infomaniak.ch';
+$dbname = 'nl8mjo_budget';
+$user = 'nl8mjo_tolister';
+$password = ''; // Add your password here
 
 try {
     $pdo = new PDO("mysql:host=$host", $user, $password);
@@ -62,7 +66,7 @@ try {
         )
     ");
 
-    // Budget history (3 months retention)
+    // Budget history (3 months retention - cleanup handled in app code)
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS budget_history (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -79,7 +83,7 @@ try {
         )
     ");
 
-    // Undo stack (last 10 steps per user)
+    // Undo stack (last 10 steps per user - cleanup handled in app code)
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS undo_stack (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -111,50 +115,6 @@ try {
         )
     ");
 
-    // Create a trigger to cleanup old history (3 months retention)
-    $pdo->exec("
-        CREATE TRIGGER IF NOT EXISTS cleanup_old_history
-        AFTER INSERT ON budget_history
-        FOR EACH ROW
-        BEGIN
-            DELETE FROM budget_history 
-            WHERE user_id = NEW.user_id 
-            AND changed_at < DATE_SUB(NOW(), INTERVAL 3 MONTH);
-        END
-    ");
-
-    // Create a trigger to limit undo stack to 10 entries per user
-    $pdo->exec("
-        CREATE TRIGGER IF NOT EXISTS limit_undo_stack
-        AFTER INSERT ON undo_stack
-        FOR EACH ROW
-        BEGIN
-            DELETE FROM undo_stack 
-            WHERE user_id = NEW.user_id 
-            AND id NOT IN (
-                SELECT id FROM (
-                    SELECT id FROM undo_stack 
-                    WHERE user_id = NEW.user_id 
-                    ORDER BY created_at DESC 
-                    LIMIT 10
-                ) AS latest_10
-            );
-        END
-    ");
-
-    // Insert default settings for new users (trigger-based)
-    $pdo->exec("
-        CREATE TRIGGER IF NOT EXISTS insert_default_settings
-        AFTER INSERT ON users
-        FOR EACH ROW
-        BEGIN
-            INSERT INTO settings (user_id, key_name, key_value) VALUES 
-            (NEW.id, 'max_partners', '2'),
-            (NEW.id, 'currency', '€'),
-            (NEW.id, 'history_retention_days', '90');
-        END
-    ");
-
     echo "Database setup complete!\n";
     echo "Tables created:\n";
     echo "- users\n";
@@ -162,14 +122,18 @@ try {
     echo "- budget_items\n";
     echo "- budget_history\n";
     echo "- undo_stack\n";
-    echo "- settings\n";
-    echo "\nTriggers created:\n";
-    echo "- cleanup_old_history (auto-cleanup history after 3 months)\n";
-    echo "- limit_undo_stack (keep only last 10 undo steps)\n";
-    echo "- insert_default_settings (auto-insert settings for new users)\n";
+    echo "- settings\n\n";
+
+    echo "NOTE: Database triggers were NOT created (your hosting provider restricts this).\n";
+    echo "Cleanup logic (history retention, undo stack limits, default settings) is handled in the application code.\n\n";
+
+    echo "Next steps:\n";
+    echo "1. Update Public/config/database.php with your database credentials\n";
+    echo "2. Run the frontend build: cd Public && npm install && npm run build\n";
+    echo "3. Deploy the Public/ folder to your web server\n";
 
 } catch (PDOException $e) {
-    die("Database setup failed: " . $e->getMessage() . "\n");
+    die("Database setup failed: " . $e->getMessage() . "\n\n");
 }
 
 // Close connection

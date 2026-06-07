@@ -170,12 +170,34 @@ class Partner {
             $stmt = $this->pdo->prepare("INSERT INTO partners (user_id, name) VALUES (?, ?)");
             $stmt->execute([$userId, 'Alexxx']);
             $stmt->execute([$userId, 'Maja']);
+            
+            // Initialize default settings (normally done by trigger, but we handle in app code)
+            $this->initializeDefaultSettings($userId);
+            
             $this->pdo->commit();
             return true;
         } catch (Exception $e) {
             $this->pdo->rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Initialize default settings for a new user
+     * (Replaces the insert_default_settings trigger)
+     * @param int $userId
+     */
+    private function initializeDefaultSettings($userId) {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM settings WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        if ($stmt->fetchColumn() > 0) {
+            return; // Already initialized
+        }
+
+        $stmt = $this->pdo->prepare("INSERT INTO settings (user_id, key_name, key_value) VALUES (?, ?, ?)");
+        $stmt->execute([$userId, 'max_partners', '2']);
+        $stmt->execute([$userId, 'currency', '€']);
+        $stmt->execute([$userId, 'history_retention_days', '90']);
     }
 }
 
