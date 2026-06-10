@@ -20,9 +20,13 @@ $allowedOrigins = [
     'http://127.0.0.1',
 ];
 
+error_log("CORS: Origin = $origin");
 if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
     header('Access-Control-Allow-Credentials: true');
+    error_log("CORS: Allowed origin, setting credentials header");
+} else {
+    error_log("CORS: Origin not in allowed list, not setting credentials header");
 }
 
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');

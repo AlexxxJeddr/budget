@@ -45,13 +45,17 @@ class AuthManager
         $user = $stmt->fetch();
 
         if (!$user) {
+            error_log("Login failed: User not found for email: $email");
             return false;
         }
+        
+        error_log("User found: {$user['id']}, verifying password");
 
         // Verify password
         if (password_verify($password, $user['password_hash'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_email'] = $user['email'];
+            error_log("Login successful for user {$user['id']}, session set");
             return true;
         }
 
