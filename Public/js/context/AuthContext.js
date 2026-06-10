@@ -65,7 +65,8 @@ export class AuthManager {
                     return { success: true, user: this.user };
                 }
             }
-            return { success: false, error: response.error || 'Login failed' };
+            // If login failed, throw an error so the caller can handle it
+            throw new Error(response.error || 'Login failed');
         } catch (error) {
             this.user = null;
             this.isLoggedIn = false;
