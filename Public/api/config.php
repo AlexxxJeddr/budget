@@ -7,6 +7,12 @@
 header('Content-Type: application/json');
 
 // Start session for authentication
+// Configure session cookie for HTTPS and cross-site compatibility
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', 1); // Only send over HTTPS
+ini_set('session.cookie_samesite', 'Lax'); // or 'None' for cross-site
+ini_set('session.use_only_cookies', 1);
+
 session_start();
 
 // Enable CORS (for development)
