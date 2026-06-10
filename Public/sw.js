@@ -45,6 +45,12 @@ self.addEventListener('activate', (event) => {
 
 // Fetch handler
 self.addEventListener('fetch', (event) => {
+  // Don't intercept API requests - let them go to the network
+  if (event.request.url.includes('/api/')) {
+    console.log('Service Worker: Passing through API request:', event.request.url);
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -61,11 +67,17 @@ self.addEventListener('fetch', (event) => {
             // Clone the response to cache it
             const responseClone = response.clone();
             
-            // Cache API responses only for GET requests
+            // Cache static assets for GET requests
             if (event.request.method === 'GET' && 
-                (event.request.url.includes('/api/') || 
-                 event.request.url.includes('.css') ||
-                 event.request.url.includes('.js'))) {
+                (event.request.url.includes('.css') ||
+                 event.request.url.includes('.js') ||
+                 event.request.url.includes('.png') ||
+                 event.request.url.includes('.jpg') ||
+                 event.request.url.includes('.jpeg') ||
+                 event.request.url.includes('.gif') ||
+                 event.request.url.includes('.svg') ||
+                 event.request.url.includes('.woff') ||
+                 event.request.url.includes('.woff2'))) {
               caches.open(CACHE_NAME)
                 .then((cache) => {
                   cache.put(event.request, responseClone);
@@ -78,7 +90,7 @@ self.addEventListener('fetch', (event) => {
       .catch((error) => {
         console.error('Service Worker: Fetch failed:', error);
         // Return a fallback response for HTML pages
-        if (event.request.headers.get('accept').includes('text/html')) {
+        if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
           return caches.match('/index.html');
         }
       })
