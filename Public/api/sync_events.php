@@ -13,7 +13,7 @@ header('Access-Control-Allow-Headers: Cache-Control');
 // Start session for authentication
 session_start();
 
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 // Check authentication
 if (!isset($_SESSION['user_id'])) {

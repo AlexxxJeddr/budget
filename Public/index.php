@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_URI'] === '/login' || $_SERVER['REQUEST_URI'] === '/login/
 
 // Handle logout
 if ($_SERVER['REQUEST_URI'] === '/logout' || $_SERVER['REQUEST_URI'] === '/logout/') {
-    require __DIR__ . '/src/api/logout.php';
+    require __DIR__ . '/api/logout.php';
     exit;
 }
 
