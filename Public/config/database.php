@@ -5,6 +5,9 @@
  */
 
 // Database configuration
+// For Infomaniak hosting, use the hostname provided in your control panel
+// e.g., 'mysql-123456.db.infomaniak.com'
+// For local development, use 'localhost' or '127.0.0.1'
 $host = 'localhost';
 $dbname = 'budget_app';
 $user = 'root';
