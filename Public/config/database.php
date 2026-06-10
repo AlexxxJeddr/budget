@@ -17,9 +17,11 @@ try {
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 } catch (PDOException $e) {
-    // Log error and die
+    // Log error and die with JSON for API requests
     error_log("Database connection failed: " . $e->getMessage());
-    die("Unable to connect to the database. Please try again later.");
+    header('Content-Type: application/json');
+    http_response_code(500);
+    die(json_encode(['error' => 'Unable to connect to the database. Please try again later.']));
 }
 
 // Set timezone for consistent timestamp handling

@@ -6,8 +6,25 @@
 // Set content type to JSON
 header('Content-Type: application/json');
 
+// Start session for authentication
+session_start();
+
 // Enable CORS (for development)
-header('Access-Control-Allow-Origin: *');
+// When using credentials, we cannot use wildcard origin
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = [
+    'https://budget.alxdrx.me',
+    'http://budget.alxdrx.me',
+    'http://localhost',
+    'http://localhost:8080',
+    'http://127.0.0.1',
+];
+
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+}
+
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
@@ -16,9 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
-
-// Start session for authentication
-session_start();
 
 // Include database configuration
 require_once __DIR__ . '/../config/database.php';
