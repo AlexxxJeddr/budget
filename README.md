@@ -1,6 +1,8 @@
 # Personal Budget Calculator
 
-A private, single-household budgeting tool for tracking monthly income, fixed and variable expenses, savings, and per-partner cash flow to a shared bank account. Built with **React 18 + TypeScript + Vite** on the frontend and **PHP 8 + MariaDB** on the backend.
+A private, single-household budgeting tool for tracking monthly income, fixed and variable expenses, savings, and per-partner cash flow to a shared bank account. Built with **vanilla JavaScript + CSS + HTML** on the frontend and **PHP 8 + MariaDB** on the backend.
+
+> **Note**: This project was refactored from React/TypeScript to vanilla JavaScript to support hosting on platforms like Infomaniak that don't support Node.js/npm.
 
 ## Features
 
@@ -28,68 +30,51 @@ A private, single-household budgeting tool for tracking monthly income, fixed an
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | React 18, TypeScript, Vite 5 |
-| Styling | Tailwind CSS v3 |
-| Icons | Lucide React |
-| Routing | React Router DOM v6 |
+| Frontend | Vanilla JavaScript (ES6+), HTML5, CSS3 |
 | Backend | PHP 8.0+ |
 | Database | MariaDB 10.5+ / MySQL 8.0+ |
-| PWA | Vite PWA Plugin, Service Worker |
+| PWA | Service Worker API |
 
 ## Project Structure
 
 ```
 Public/
 ├── .htaccess                          # Apache routing configuration
-├── index.php                          # Frontend entry point
-├── manifest.json                      # PWA manifest
-├── sw.js                              # Service worker
-├── package.json                       # NPM dependencies & scripts
-├── tsconfig.json                      # TypeScript configuration
-├── vite.config.ts                     # Vite + PWA configuration
-├── tailwind.config.js                 # Tailwind CSS configuration
-├── postcss.config.js                  # PostCSS configuration
+├── index.php                        # Frontend entry point (serves HTML)
+├── manifest.json                    # PWA manifest
+├── sw.js                            # Service worker
 ├── config/
-│   └── database.php                   # Database connection (PDO)
+│   └── database.php                 # Database connection (PDO)
 ├── install/
-│   └── setup.php                       # Database schema setup
+│   └── setup.php                     # Database schema setup
+├── api/                             # PHP API endpoints
+│   ├── config.php                   # API configuration (CORS, sessions)
+│   ├── login.php                    # User login endpoint
+│   ├── logout.php                   # User logout endpoint
+│   ├── register.php                 # User registration endpoint
+│   ├── user.php                     # Get current user info
+│   ├── budget_items.php             # Budget item CRUD operations
+│   ├── calculations.php             # Budget calculations
+│   ├── history.php                  # History retrieval
+│   ├── undo.php                     # Undo last action
+│   ├── partners.php                 # Partner management
+│   └── sync_events.php              # Server-Sent Events for real-time sync
 ├── assets/
 │   ├── css/
-│   │   └── styles.css                  # Main stylesheet
-│   └── icons/                          # PWA icons (72x72 to 512x512)
-└── src/
-    ├── main.tsx                        # React entry point
-    ├── App.tsx                         # Main app with routing
-    ├── index.css                       # Tailwind CSS imports
-    ├── types/
-    │   └── index.ts                    # TypeScript type definitions
-    ├── utils/
-    │   └── api.ts                       # API client for PHP backend
-    ├── contexts/
-    │   ├── AuthContext.tsx             # Authentication state management
-    │   └── BudgetContext.tsx           # Budget state with real-time sync
-    ├── hooks/
-    │   └── useBudgetItems.ts           # Custom hooks for budget operations
-    ├── components/
-    │   ├── EditableAmount.tsx          # Inline editable amount input
-    │   ├── BudgetItemRow.tsx           # Individual budget item row
-    │   ├── BudgetCard.tsx              # Category card component
-    │   └── PartnerSummary.tsx          # Partner breakdown display
+│   │   └── styles.css               # Main stylesheet
+│   └── icons/                       # PWA icons (72x72 to 512x512)
+└── js/                              # Vanilla JavaScript frontend
+    ├── app.js                       # Main application entry point
+    ├── types.js                     # JSDoc type definitions
+    ├── context/
+    │   ├── AuthContext.js           # Authentication state management
+    │   └── BudgetContext.js         # Budget data state management
     ├── pages/
-    │   ├── Login.tsx                   # Login page
-    │   └── BudgetDashboard.tsx         # Main dashboard
-    └── api/
-        ├── config.php                  # API configuration (CORS, sessions)
-        ├── login.php                   # User login endpoint
-        ├── logout.php                  # User logout endpoint
-        ├── register.php                # User registration (admin only)
-        ├── user.php                    # Get current user info
-        ├── budget_items.php            # Budget item CRUD operations
-        ├── calculations.php            # Budget calculations
-        ├── history.php                 # History retrieval
-        ├── undo.php                    # Undo last action
-        ├── partners.php                # Partner management
-        └── sync_events.php             # Server-Sent Events for real-time sync
+    │   ├── Login.js                 # Login & registration pages
+    │   └── BudgetDashboard.js       # Main dashboard
+    └── utils/
+        ├── api.js                   # API client (fetch-based)
+        └── router.js                # Client-side router
 ```
 
 ## Database Schema
@@ -307,9 +292,8 @@ The system dynamically matches income items to partners by checking if the partn
 
 - **PHP**: 8.0 or higher
 - **MariaDB/MySQL**: 10.5+ or 8.0+
-- **Node.js**: 18+ (for frontend build)
 - **Web Server**: Apache or Nginx
-- **Composer**: For PHP dependencies (optional)
+- **No Node.js required** - Frontend uses vanilla JavaScript
 
 ### Step 1: Clone the Repository
 
@@ -334,29 +318,14 @@ $user = 'your_username';
 $password = 'your_password';
 ```
 
-Then run the setup script:
-```bash
-php Public/install/setup.php
+Then run the setup script by visiting:
+```
+http://yourdomain.com/install/setup.php
 ```
 
 This will create all tables, triggers, and insert default settings.
 
-### Step 3: Install Frontend Dependencies
-
-```bash
-cd Public
-npm install
-```
-
-### Step 4: Build Frontend
-
-```bash
-npm run build
-```
-
-This will create a `dist/` directory with the compiled frontend assets.
-
-### Step 5: Configure Web Server
+### Step 3: Configure Web Server
 
 #### Apache (Recommended)
 
@@ -407,7 +376,30 @@ server {
 }
 ```
 
-### Step 6: Create First User
+### Step 4: Deploy to Infomaniak (or any PHP hosting)
+
+#### Option A: FTP Upload
+1. Upload the entire `Public` folder to your Infomaniak web hosting
+2. Ensure the folder structure is preserved
+3. Visit your domain to complete setup
+
+#### Option B: SSH Upload
+```bash
+# Copy Public folder contents to your web root
+scp -r Public/* user@your-infomaniak-server:/path/to/webroot/
+```
+
+#### Option C: Git Clone on Server
+```bash
+# On your Infomaniak server
+cd /path/to/webroot
+git clone https://github.com/AlexxxJeddr/budget.git .
+# Copy Public contents to root
+cp -r budget/Public/* .
+rm -rf budget
+```
+
+### Step 5: Create First User
 
 You can create the first user by:
 
@@ -422,53 +414,60 @@ mysql -u root -p budget_app -e "INSERT INTO users (email, password_hash) VALUES 
 
 2. **Using Registration Endpoint** (only works when no users exist):
 ```bash
-curl -X POST http://localhost/api/register.php \
+curl -X POST http://yourdomain.com/api/register.php \
   -H "Content-Type: application/json" \
   -d '{"email": "admin@example.com", "password": "your_password"}'
 ```
 
-### Step 7: Deploy
-
-Copy the contents of `Public/` to your web server's document root:
-```bash
-# For Apache
-cp -r Public/* /var/www/html/
-
-# Or create a symlink
-ln -s /path/to/budget/Public /var/www/html/budget
-```
-
-### Step 8: Verify Installation
+### Step 6: Verify Installation
 
 Visit `http://yourdomain.com` in your browser. You should see the login page.
 
 ## Development
 
-### Run Development Server
+### No Build Step Required!
 
-```bash
-cd Public
-npm run dev
+Since the frontend uses vanilla JavaScript, there's no build step. Just edit the files in `Public/js/` and refresh your browser.
+
+### Project Structure for Development
+
+```
+Public/
+├── js/
+│   ├── app.js               # Main app initialization
+│   ├── types.js             # Type definitions (JSDoc)
+│   ├── context/
+│   │   ├── AuthContext.js   # Auth state (singleton pattern)
+│   │   └── BudgetContext.js # Budget state (singleton pattern)
+│   ├── pages/
+│   │   ├── Login.js         # Login & register UI
+│   │   └── BudgetDashboard.js # Main dashboard UI
+│   └── utils/
+│       ├── api.js           # API client (fetch wrapper)
+│       └── router.js        # Client-side routing
 ```
 
-This will start Vite's development server on `http://localhost:3000`. The server will proxy API requests to your PHP backend.
+### Adding New Features
 
-### Project Scripts
+1. **Add a new page**: Create a new file in `Public/js/pages/`
+2. **Add a route**: In `Public/js/app.js`, add a route handler
+3. **Add state**: Use the existing `AuthContext.js` or `BudgetContext.js` patterns
+4. **Add API calls**: Extend `Public/js/utils/api.js`
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
+### JavaScript Modules
 
-### Folder Aliases
+All frontend code uses ES6 modules with `import/export` syntax. This is supported in all modern browsers without any build tools.
 
-The project uses `@/*` alias for imports:
-```typescript
-import { useAuth } from '@/contexts/AuthContext';
-// Instead of:
-import { useAuth } from '../../../contexts/AuthContext';
+```javascript
+// Importing
+import { authManager } from './context/AuthContext.js';
+import { budgetManager } from './context/BudgetContext.js';
+
+// Exporting
+class MyComponent {
+    render() { /* ... */ }
+}
+export { MyComponent };
 ```
 
 ## Configuration
@@ -492,11 +491,10 @@ UPDATE settings SET key_value = '$' WHERE user_id = 1 AND key_name = 'currency';
 
 -- Change max partners (1 or 2)
 UPDATE settings SET key_value = '1' WHERE user_id = 1 AND key_name = 'max_partners';
+
+-- Change history retention (days)
+UPDATE settings SET key_value = '60' WHERE user_id = 1 AND key_name = 'history_retention_days';
 ```
-
-### Default Items
-
-Default budget items are automatically created for new users. You can modify them in `Public/src/Budget/BudgetManager.php` in the `initializeDefaultItems()` method.
 
 ## Security Considerations
 
@@ -537,14 +535,15 @@ Default budget items are automatically created for new users. You can modify the
 - Ensure `mod_rewrite` is enabled in Apache
 - Check `.htaccess` file exists in `Public/`
 - Verify `AllowOverride All` is set in Apache config
+- For Infomaniak: Ensure you uploaded to the correct directory
 
-#### 3. Frontend Build Fails
-**Error**: Build errors with TypeScript or Vite
+#### 3. JavaScript Modules Not Loading
+**Error**: "Failed to load module" or "Cannot use import statement"
 
 **Solution**:
-- Delete `node_modules/` and `package-lock.json`
-- Run `npm install` again
-- Ensure Node.js version is 18+
+- Ensure your browser supports ES6 modules (all modern browsers do)
+- Make sure script tags use `type="module"`
+- Check file paths are correct (relative to HTML file)
 
 #### 4. Real-time Sync Not Working
 **Error**: Changes don't sync across devices
@@ -572,24 +571,26 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 ```
 
+Enable JavaScript debug logging by adding `console.log()` statements in the JS files.
+
 ## API Examples
 
 ### Login
 ```bash
-curl -X POST http://localhost/api/login.php \
+curl -X POST http://yourdomain.com/api/login.php \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "your_password"}'
 ```
 
 ### Get Budget Items
 ```bash
-curl -X GET http://localhost/api/budget_items.php \
+curl -X GET http://yourdomain.com/api/budget_items.php \
   -H "Cookie: PHPSESSID=your_session_id"
 ```
 
 ### Update Budget Item
 ```bash
-curl -X PUT "http://localhost/api/budget_items.php?id=1" \
+curl -X PUT "http://yourdomain.com/api/budget_items.php?id=1" \
   -H "Content-Type: application/json" \
   -H "Cookie: PHPSESSID=your_session_id" \
   -d '{"amount": 100.50}'
@@ -597,15 +598,60 @@ curl -X PUT "http://localhost/api/budget_items.php?id=1" \
 
 ### Get Calculations
 ```bash
-curl -X GET http://localhost/api/calculations.php \
+curl -X GET http://yourdomain.com/api/calculations.php \
   -H "Cookie: PHPSESSID=your_session_id"
 ```
 
 ### Undo Last Action
 ```bash
-curl -X POST http://localhost/api/undo.php \
+curl -X POST http://yourdomain.com/api/undo.php \
   -H "Cookie: PHPSESSID=your_session_id"
 ```
+
+## Infomaniak-Specific Notes
+
+### Hosting Configuration
+- Infomaniak shared hosting **does not support Node.js or npm**
+- This vanilla JS version works perfectly on Infomaniak
+- No build step required - upload and go!
+
+### Deployment Steps for Infomaniak
+
+1. **Upload via FTP**:
+   - Use FileZilla or Infomaniak's File Manager
+   - Upload entire `Public` folder to your web root
+   - Ensure `.htaccess` is uploaded (it's hidden, enable "show hidden files")
+
+2. **Set up Database**:
+   - Create database in Infomaniak control panel
+   - Note the hostname (usually `localhost` or a specific server)
+   - Create a database user with full permissions
+   - Update `Public/config/database.php` with credentials
+
+3. **Run Installer**:
+   - Visit `http://yourdomain.com/install/setup.php`
+   - This creates all tables and triggers
+   - Delete or protect the `install/` folder after setup
+
+4. **Create Admin User**:
+   - Use the registration endpoint or SQL as described above
+
+### Known Infomaniak Limitations
+- No Node.js support on shared hosting
+- No npm/yarn available
+- PHP version: Usually 8.0+ (check in control panel)
+- Database: MariaDB 10.5+
+
+## Browser Support
+
+The vanilla JavaScript frontend supports:
+- Chrome (recommended)
+- Firefox
+- Safari
+- Edge
+- Mobile browsers (iOS Safari, Chrome for Android)
+
+All modern browsers support ES6 modules and the Fetch API used in this application.
 
 ## Contributing
 
@@ -621,10 +667,9 @@ This project is private and proprietary. All rights reserved.
 
 ## Credits
 
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS
+- **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
 - **Backend**: PHP, MariaDB
-- **Icons**: Lucide React
-- **PWA**: Vite PWA Plugin
+- **PWA**: Service Worker API
 
 ## Support
 
