@@ -88,6 +88,18 @@ if ($_SERVER['REQUEST_URI'] === '/logout' || $_SERVER['REQUEST_URI'] === '/logou
     exit;
 }
 
+// Handle API endpoints without /api/ prefix (for backwards compatibility)
+$pathInfo = pathinfo($_SERVER['REQUEST_URI']);
+if (isset($pathInfo['extension']) && $pathInfo['extension'] === 'php') {
+    $basename = basename($_SERVER['REQUEST_URI']);
+    $apiFile = __DIR__ . '/api/' . $basename;
+    
+    if (file_exists($apiFile)) {
+        require $apiFile;
+        exit;
+    }
+}
+
 // For all other routes, serve the main app
 serveFrontend();
 
