@@ -5,6 +5,7 @@
  */
 
 const API_BASE = '/api';
+const API_TIMEOUT = 10000; // 10 seconds timeout
 
 /**
  * Helper function to handle API requests
@@ -23,7 +24,18 @@ async function apiRequest(endpoint, options = {}) {
         credentials: 'include', // Include cookies for session
     };
 
-    const response = await fetch(url, { ...defaultOptions, ...options });
+    // Create a timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+            reject(new Error(`Request to ${endpoint} timed out after ${API_TIMEOUT}ms`));
+        }, API_TIMEOUT);
+    });
+
+    // Race the fetch against the timeout
+    const response = await Promise.race([
+        fetch(url, { ...defaultOptions, ...options }),
+        timeoutPromise
+    ]);
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
