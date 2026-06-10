@@ -41,7 +41,16 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../Auth/AuthManager.php';
 
 // AuthManager instance
-$authManager = new AuthManager($pdo);
+try {
+    $authManager = new AuthManager($pdo);
+    error_log("AuthManager created successfully");
+} catch (Exception $e) {
+    error_log("Failed to create AuthManager: " . $e->getMessage());
+    error_log("AuthManager trace: " . $e->getTraceAsString());
+    http_response_code(500);
+    echo json_encode(['error' => 'Authentication system error']);
+    exit;
+}
 
 // Check authentication for protected endpoints
 function requireAuth() {

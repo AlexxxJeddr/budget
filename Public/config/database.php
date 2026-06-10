@@ -18,14 +18,19 @@ $password = '';
 // For Infomaniak, use: mysql:host=nl8mjo.myd.infomaniak.com;dbname=nl8mjo_budget;charset=utf8mb4
 try {
     error_log("Attempting database connection to host=$host, dbname=$dbname");
-    // Use TCP/IP explicitly by prefixing host with tcp:
-    // This prevents PDO from trying Unix socket which doesn't work on Infomaniak
-    $dsn = "mysql:host=tcp:$host;dbname=$dbname;charset=utf8mb4";
+    // For Infomaniak, use the full hostname directly
+    // PDO should use TCP/IP by default for remote hosts
+    $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
     
-    $pdo = new PDO($dsn, $user, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+    // Set PDO to use TCP/IP explicitly (avoid Unix socket)
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4",
+    ];
+    
+    $pdo = new PDO($dsn, $user, $password, $options);
     error_log("Database connection successful");
 } catch (PDOException $e) {
     // Log error and die with JSON for API requests
