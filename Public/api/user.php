@@ -14,6 +14,7 @@ try {
     $userId = requireAuth();
     
     if (!$userId) {
+        error_log("User not authenticated in user.php");
         sendError('Not authenticated', 401);
     }
 
@@ -23,12 +24,15 @@ try {
     $user = $stmt->fetch();
 
     if (!$user) {
+        error_log("User not found in database: $userId");
         sendError('User not found', 404);
     }
 
     sendResponse(['success' => true, 'data' => $user]);
 
 } catch (Exception $e) {
+    error_log("User endpoint error: " . $e->getMessage());
+    error_log("User endpoint trace: " . $e->getTraceAsString());
     sendError($e->getMessage(), 500);
 }
 ?>

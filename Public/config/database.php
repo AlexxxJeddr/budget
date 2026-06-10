@@ -12,13 +12,16 @@ $password = '';
 
 // Create PDO connection
 try {
+    error_log("Attempting database connection to host=$host, dbname=$dbname");
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+    error_log("Database connection successful");
 } catch (PDOException $e) {
     // Log error and die with JSON for API requests
     error_log("Database connection failed: " . $e->getMessage());
+    error_log("Database connection error code: " . $e->getCode());
     header('Content-Type: application/json');
     http_response_code(500);
     die(json_encode(['error' => 'Unable to connect to the database. Please try again later.']));

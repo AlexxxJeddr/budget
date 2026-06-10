@@ -27,10 +27,14 @@ try {
             'userId' => $authManager->getUserId()
         ]);
     } else {
+        // Log failed login attempt
+        error_log("Login failed for email: $email");
         sendError('Invalid email or password', 401);
     }
 
 } catch (Exception $e) {
+    error_log("Login error: " . $e->getMessage());
+    error_log("Login trace: " . $e->getTraceAsString());
     sendError($e->getMessage(), 500);
 }
 ?>
