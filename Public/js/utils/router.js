@@ -99,7 +99,7 @@ export class Router {
      * @param {string} path
      */
     redirect(path) {
-        window.location.href = path;
+        this.navigate(path, true);
     }
     
     /**

@@ -95,13 +95,22 @@ export function initApp() {
     // Initialize router with app container
     router.init('#app');
     
-    // Start real-time sync when authenticated
+    // Re-run current route when auth state changes from loading
+    let lastAuthWasLoading = true;
     authManager.subscribe((authState) => {
+        // Start/stop sync based on auth
         if (authState.isLoggedIn) {
             budgetManager.startSync();
         } else {
             budgetManager.stopSync();
         }
+        
+        // Re-run route handler if auth just finished loading
+        if (lastAuthWasLoading && !authState.isLoading) {
+            const currentPath = router.getCurrentPath();
+            router.navigate(currentPath, false);
+        }
+        lastAuthWasLoading = authState.isLoading;
     });
     
     appState.isInitialized = true;
