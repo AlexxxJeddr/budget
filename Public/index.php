@@ -19,6 +19,20 @@ if (strpos($_SERVER['REQUEST_URI'], '/api/') === 0) {
     }
 }
 
+// Handle JavaScript modules
+if (strpos($_SERVER['REQUEST_URI'], '/js/') === 0) {
+    $jsPath = __DIR__ . $_SERVER['REQUEST_URI'];
+    
+    if (file_exists($jsPath)) {
+        header('Content-Type: application/javascript');
+        readfile($jsPath);
+        exit;
+    } else {
+        http_response_code(404);
+        exit;
+    }
+}
+
 // Handle static assets
 if (strpos($_SERVER['REQUEST_URI'], '/assets/') === 0) {
     $assetPath = __DIR__ . $_SERVER['REQUEST_URI'];
@@ -136,7 +150,7 @@ function serveFrontend() {
     <!-- Main Application Script -->
     <script type="module">
         // Import and initialize the app
-        import { initApp } from './js/app.js';
+        import { initApp } from '/js/app.js';
         
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
